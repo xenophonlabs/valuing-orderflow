@@ -1,42 +1,65 @@
 \section{Introduction} \label{section:intro}
 
-    \textbf{The Uniswap Protocol.}
-        % TODO give quick history of the iterations of the protocol
-        % TODO 
+    \textbf{The Uniswap protocol.} 
+        The Uniswap protocol is a collection of smart contracts that enable liquidity providers (LPs) to passively make a market on pairs of fungible tokens. LPs deposit tokens into a pool, and traders can place orders against the liquidity in the pool. The price that traders receive is computed in smart contracts based on the state of the pool; importantly, LPs are not required to change their liquidity positions to facilitate trades on the pool. Instead of earning revenue by charging a bid-ask spread, Uniswap's LPs earn a fee on each order that is proportional to the order's volume.
+        % This makes Uniswap an AMM: automated market maker.
+
+        Since the tokens traded on Uniswap have time-dependent demand, and the price quoted by an Uniswap pool does not utilize a time term, the prices quoted by the pool do not always align with those of external trading venues. In the case of Uniswap V2, the only way of changing the price quoted by a pool is to place an order on the pool \cite{v2Core}. Although this is technically not the case in Uniswap V3, since LPs can set their liquidity positions with different price bounds, the cost of blockspace makes it impractical for LPs to affect price discovery by updating and cancelling liquidity positions \cite{v3Core}. This is in contrast to the prevailing orderbook-based centralized exchanges, where liquidity providers can remove limit orders to adjust the price, all without incurring cost when cancelling orders. In both Uniswap V2 and V3, price discovery is primarily driven by arbitrageurs. % TODO query to see the frequency of LP position updates vs. trades; would be good to show that the ratio of (liquidity updates) / (trades) is smaller than that of centralized exchanges (where the ratio is roughly 10-100)
+
+        Under most conditions, taking the other side of an arbitrageur's trade is a very bad deal for LPs. The more general phenomenon of trading between parties with asymmetric information is known in game theory as \textit{adverse selection}. % TODO cite some paper about adverse selection
+        Perhaps obviously, agents with more information about the ``true'' value of a financial product than their counterparty can use this information to place better trades. 
+        And since bilateral exchange of common-value assets is a zero-sum game, % TODO check this statement, and perhaps re-word it
+        it follows that the agent who gets the better deal -- typically the agent with better information -- profits at the expense of their counterparty. This is relevant in the case of Uniswap, where LPs' trading strategy is fixed by the automated market maker, and arbitrageurs make money at the expense of LPs. % TODO add note about long-term profitability of LPs from Dave White's piece
+        
+        Intuitively, LPs should earn more when they face non-arbitrage volume. To study this, we introduce the notion of orderflow information.
+        
+        % the orderflow they face is less informed. As an example, suppose if Alice buys 10 ETH from an ETH-USDC pool and Bob sells 10 ETH on the same pool shortly after, the LPs earn fees on all 20 ETH of volume, and the reserves of the pool's LPs goes unchanged. 
+        % At least one of Alice or Bob's orders was necessarily uninformed, and this leads to a better end-state than if only the informed order was present. Still, even if we know that uninformed orderflow is good for LPs, it is not clear exactly \textit{how} good uninformed orderflow is for LPs. To do this
+
+
 
     \textbf{Orderflow information.}
         % TODO give the random-variable definition of informed orderflow, then define uninformed orderflow as its opposite
         % P_t = true relative price of token0 at a time `t` in the future, x = size of an order of token0. Then an informed trade is one where E(P_t | this order exists with size = x) != E(P_t). We have that E(P_t) is our expectation of the price at time `t` with no further info, and E(P_t | this order exists with size = x) is our expectation when we know the order's size. That is, x has some bearing on the expected price. Thought, should we make it directional, like E(P|x)>E(P) when x>0, E(P|x)<E(P) when x<0?
-        We can formally define uninformed flow using price expectations. Let $t_0$ be the current time, $t>t_0$ be any fixed time in the future, let $P_t$ be the true price \footnote{We do not have a formal definition of what makes a ``true'' price, and perhaps it is flawed to suppose that such a single number even exists. For instance, there may at any given time exist a minimum offer and a maximum bid, but the existence of a ``true'' price is not guaranteed. Nevertheless, in practice we would measure this as some weighted average of midpoint prices among multiple trading venues for the assets in question.} of token0 relative to token1 at time $t$; 
+        We can formally define uninformed flow using price expectations. Let $t_0$ be the current time, let $h>0$ be a fixed time interval that we choose, 
+        let $P_{t}$ be the instantaneous pool price
+        % \footnote{We do not have a formal definition of what makes a ``true'' price, and perhaps it is flawed to suppose that such a single number even exists. For instance, there may at any given time exist a minimum offer and a maximum bid, but the existence of a ``true'' price is not guaranteed. Nevertheless, in practice we would measure this as some weighted average of midpoint prices among multiple trading venues for the assets in question.} 
+        of token0 relative to token1 at a time $t$,
         let $O$ be a random variable representing the next order in the pool, % TODO define what domain O is a part of, e.g. tuple of (size, user account)
-        and let $x(O)$ be the number of token0 purchased in order $O$ ($X_O$ is negative if token0 is sold). We say that an order $o$ is \textit{informed} if $P_t$'s expected value changes in the same direction as the order $o$ when it is known that $O=o$:
+        and let $x(O)$ be the number of token0 purchased in order $O$ ($x(O)$ is negative if token0 is sold). We say that an order $o$ is \textit{informed} if the expected value of the change in pool price is in the same direction as the order:
+        % \begin{align}
+        %     \begin{split}
+        %         \mathbb E [P_t \ | \ O=o] > E[P_t] \text{ if } x(o) > 0, \\
+        %         \mathbb E [P_t \ | \ O=o] < E[P_t] \text{ if } x(o) < 0.    
+        %     \end{split}
+        % \end{align}
         \begin{align}
-            \begin{split}
-                \mathbb E [P_t \ | \ O=o] > E[P_t] \text{ if } x(o) > 0, \\
-                \mathbb E [P_t \ | \ O=o] < E[P_t] \text{ if } x(o) < 0.    
-            \end{split}
+            \text{sign} \left ( \mathbb E [P_{t_0+h}-P_{t_0} \ | \ O=o]\right) = \text{sign} \left( x \right).
+            \label{eq:informed-defn}
         \end{align}
 
-        In contrast, we say that an order is \textit{uninformed} if $P_t$'s expected value does not change in the same direction as the order $o$ when it is known that $O=o$:
-        \begin{align}
-            \begin{split}
-                \mathbb E [P_t \ | \ O=o] \leq E[P_t] \text{ if } x(o) > 0, \\
-                \mathbb E [P_t \ | \ O=o] \geq E[P_t] \text{ if } x(o) < 0.    
-            \end{split}
-        \end{align}
+        In contrast, we say that an order $o$ is \textit{uninformed} if statement \ref{eq:informed-defn} is false. 
 
-        Informed trades are directionally predictive of the future relative price of the two assets in the Uniswap pool. In the case where we  the expected future price is equal to the current Uniswap price 
-        % \footnote{Specifically, this is the price of the Uniswap pool without any slippage.}
-        , $\hat P_{t_0}$, then we have that an informed trade satisfies
+        Notice that this is a permissive characterization of orderflow information. For instance, if order $o$ is executed at time $t_0$, and the next order is executed at time $t_1>t_0+h$, then order $o$ will necessarily be characterized as informed, since $o$ pushes the pool price in the direction of $x$. This can be resolved by selecting a sufficiently large $h$ parameter, for which we provide a methodology in Section \ref{section:lp-oflow-value}.
 
-        \begin{align*}
-            \begin{split}
-                \mathbb E [P_t \ | \ O=o] > \hat P_{t_0} \text{ if } x(o) > 0, & \text{ and} \\
-                \mathbb E [P_t \ | \ O=o] < \hat P_{t_0} \text{ if } x(o) < 0.    
-            \end{split}
-        \end{align*}
+        Furthermore, this characterization considers orders informed even when $\text{sign} \left ( \mathbb E [P_{t_0+h}-P_{t_0}]\right) = \text{sign}(x)$. That is, if the pool price is expected to move in the same direction as order $o$, even if $o$ did not exist, we would still characterize $o$ as informed. Put another way, an order $o$ can be informed, even if it does not bring new information about price changes. Since an informed order \textit{can} bring new information about price changes, we define uninformed orders with conditional expectation.
 
-        In this scenario, the expected future price gets pushed in the direction of the informed order, and this means that by virtue of its existence as an informed order, the order was in the \textit{correct} direction. Since the Uniswap LPs took the other side of the informed order, they traded in the \textit{wrong} direction, insofar as they transacted at an unfavorable price relative to the future true price.
+        % By defining informed orderflow permissively, we bias our work slightly in the direction of over-estimating informed orderflow. However, we do not believe this is over-estimation to a meaningful extent. This bias only affects our work on the distribution of uninformed orderflow.
+
+        
+
+        % Informed trades are directionally predictive of the future relative price of the two assets in the Uniswap pool. In the case where the expected future price is equal to the current Uniswap price 
+        % % \footnote{Specifically, this is the price of the Uniswap pool without any slippage.}
+        % , $\hat P_{t_0}$, then we have that an informed trade satisfies
+
+        % \begin{align*}
+        %     \begin{split}
+        %         \mathbb E [P_t \ | \ O=o] > \hat P_{t_0} \text{ if } x(o) > 0, & \text{ and} \\
+        %         \mathbb E [P_t \ | \ O=o] < \hat P_{t_0} \text{ if } x(o) < 0.    
+        %     \end{split}
+        % \end{align*}
+
+        % In this scenario, the expected future price gets pushed in the direction of the informed order, and this means that by virtue of its existence as an informed order, the order was in the \textit{correct} direction. Since the Uniswap LPs took the other side of the informed order, they traded in the \textit{wrong} direction, insofar as they transacted at an unfavorable price relative to the future true price.
 
         % A practical example of informed flow is that of arbitrageurs. If there is a temporary difference between the pool price and the price of another venue, 
 
@@ -44,7 +67,6 @@
 
     \textbf{Related work.}
     % TODO mention work on the continuous-time profitability of LPs
-    
     The profitability of Uniswap LPs is not a new topic of research. 
     Angeris et al. provided analytic formulas for the profitability of Uniswap LPs between discrete points in time \cite{angeris2019analysis}. % TODO maybe get rid of this
     White demonstrated that Uniswap LPs with nearly-zero fees outperform those with higher fees under specific volatility and drift conditions. % TODO cite Uniswap's Financial Alchemy https://research.paradigm.xyz/uniswaps-alchemy
