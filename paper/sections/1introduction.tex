@@ -1,1 +1,53 @@
 \section{Introduction} \label{section:intro}
+
+    \textbf{The Uniswap Protocol.}
+        % TODO give quick history of the iterations of the protocol
+        % TODO 
+
+    \textbf{Orderflow information.}
+        % TODO give the random-variable definition of informed orderflow, then define uninformed orderflow as its opposite
+        % P_t = true relative price of token0 at a time `t` in the future, x = size of an order of token0. Then an informed trade is one where E(P_t | this order exists with size = x) != E(P_t). We have that E(P_t) is our expectation of the price at time `t` with no further info, and E(P_t | this order exists with size = x) is our expectation when we know the order's size. That is, x has some bearing on the expected price. Thought, should we make it directional, like E(P|x)>E(P) when x>0, E(P|x)<E(P) when x<0?
+        We can formally define uninformed flow using price expectations. Let $t_0$ be the current time, $t>t_0$ be any fixed time in the future, let $P_t$ be the true price \footnote{We do not have a formal definition of what makes a ``true'' price, and perhaps it is flawed to suppose that such a single number even exists. For instance, there may at any given time exist a minimum offer and a maximum bid, but the existence of a ``true'' price is not guaranteed. Nevertheless, in practice we would measure this as some weighted average of midpoint prices among multiple trading venues for the assets in question.} of token0 relative to token1 at time $t$; 
+        let $O$ be a random variable representing the next order in the pool, % TODO define what domain O is a part of, e.g. tuple of (size, user account)
+        and let $x(O)$ be the number of token0 purchased in order $O$ ($X_O$ is negative if token0 is sold). We say that an order $o$ is \textit{informed} if $P_t$'s expected value changes in the same direction as the order $o$ when it is known that $O=o$:
+        \begin{align}
+            \begin{split}
+                \mathbb E [P_t \ | \ O=o] > E[P_t] \text{ if } x(o) > 0, \\
+                \mathbb E [P_t \ | \ O=o] < E[P_t] \text{ if } x(o) < 0.    
+            \end{split}
+        \end{align}
+
+        In contrast, we say that an order is \textit{uninformed} if $P_t$'s expected value does not change in the same direction as the order $o$ when it is known that $O=o$:
+        \begin{align}
+            \begin{split}
+                \mathbb E [P_t \ | \ O=o] \leq E[P_t] \text{ if } x(o) > 0, \\
+                \mathbb E [P_t \ | \ O=o] \geq E[P_t] \text{ if } x(o) < 0.    
+            \end{split}
+        \end{align}
+
+        Informed trades are directionally predictive of the future relative price of the two assets in the Uniswap pool. In the case where we  the expected future price is equal to the current Uniswap price 
+        % \footnote{Specifically, this is the price of the Uniswap pool without any slippage.}
+        , $\hat P_{t_0}$, then we have that an informed trade satisfies
+
+        \begin{align*}
+            \begin{split}
+                \mathbb E [P_t \ | \ O=o] > \hat P_{t_0} \text{ if } x(o) > 0, & \text{ and} \\
+                \mathbb E [P_t \ | \ O=o] < \hat P_{t_0} \text{ if } x(o) < 0.    
+            \end{split}
+        \end{align*}
+
+        In this scenario, the expected future price gets pushed in the direction of the informed order, and this means that by virtue of its existence as an informed order, the order was in the \textit{correct} direction. Since the Uniswap LPs took the other side of the informed order, they traded in the \textit{wrong} direction, insofar as they transacted at an unfavorable price relative to the future true price.
+
+        % A practical example of informed flow is that of arbitrageurs. If there is a temporary difference between the pool price and the price of another venue, 
+
+
+
+    \textbf{Related work.}
+    % TODO mention work on the continuous-time profitability of LPs
+    
+    The profitability of Uniswap LPs is not a new topic of research. 
+    Angeris et al. provided analytic formulas for the profitability of Uniswap LPs between discrete points in time \cite{angeris2019analysis}. % TODO maybe get rid of this
+    White demonstrated that Uniswap LPs with nearly-zero fees outperform those with higher fees under specific volatility and drift conditions. % TODO cite Uniswap's Financial Alchemy https://research.paradigm.xyz/uniswaps-alchemy
+    A number of reports have shed light on the historical profitability of Uniswap V3. % TODO cite defi guy, fbifemboy's medium article (https://crocswap.medium.com/usage-of-markout-to-calculate-lp-profitability-in-uniswap-v3-e32773b1a88e), thiccythot (https://dune.com/thiccythot/uniswap-markouts, https://medium.com/friktion-research/defi-deep-dive-uniswap-part-2-8be77a859f47), Uniswap V3 profitability analyses (_maybe_ https://uniswap.org/blog/uniswap-v3-dominance, https://uniswap.org/blog/fee-returns)
+    
+    % TODO mention work on information asymmetry in markets at large
