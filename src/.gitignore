@@ -1,6 +1,3 @@
-<<<<<<< HEAD
 venv
-=======
-venv/
->>>>>>> c23205b5d7f5d70e59198e8761259839cd1edc5b
 .ipynb_checkpoints/
+data
