@@ -1,0 +1,40 @@
+\section{Computing an Optimal Sandwich} \label{appendix:opt-sandwich}
+
+Here we give a simple algorithm for computing optimal sandwich attacks on Uniswap V3. In words, we do roughly the following.
+
+We check if the optimal sandwich order size surpasses the current tick; if it does, then the order size is the amount needed to get to the next tick, plus the result of the optimal arbitrage formula recursed on the next optimal sandwich solution; if it does not, then use the optimal sandwich solution. If in the recursive step or the base case the trade is unprofitable, then set the optimal amount to 0. This algorithm's correctness comes from the fact that sandwich profits w.r.t. trade size are single-peaked, and thus we can optimistically cross as many ticks as necessary to get to the optimal sandwich that ignores gas costs, and if we are ever unprofitable, we can simply lower our sandwich input amount.
+
+See the following figure for python-like pseudocode implementation.
+
+\label{fig:python-pseudocode}
+\begin{python}
+    def optimal_sandwich_input(victim_order, curtick, pool_data, gas_fee_per_tick, gas_fees_incurred=0):
+        """
+        Assuming there's a victim order that's buying token0, here's
+        an algorithm for computing the optimal sandwich input size of
+        token1. A similar algorithm can be used to compute the optimal
+        sandwich input when the victim is selling token0.
+        """
+        # optimal sandwich size if trading on Uniswap V2
+        v2_size = v2_optimal_sandwich_size(victim_order, pool_data)
+        curtick_max_size = get_size_until_tick_crossing()
+        
+        if v2_size > curtick_max_size:
+
+            # find the optimal rest of the trade to perform, under the 
+            # optimistic assumption that it's worth it to trade on this 
+            # tick
+            gas_fees_incurred += gas_fee_per_tick
+            rest_of_order_size = optimal_rest_of_sandwich(victim_order, curtick+1, pool_data, gas_fee_per_tick, gas_fees_incurred)
+            
+            if trading_this_tick_itself_is_profitable(gas_fee_per_tick, curtick_max_size):
+                return curtick_max_size + rest_of_order_size
+            else:
+            return 0
+            
+        else:
+            if trading_this_tick_itself_is_profitable(gas_fee_per_tick, v2_size):
+            return v2_size
+            else:
+                return 0
+\end{python}

@@ -1,0 +1,10 @@
+numpy
+pandas
+
+matplotlib
+seaborn
+
+requests
+
+jupyter
+

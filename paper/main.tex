@@ -3,11 +3,13 @@
 \usepackage{amsmath}
 \usepackage{amssymb}
 \usepackage{amsthm}
+\usepackage{mdframed}
 \usepackage[utf8]{inputenc}
 \usepackage{indentfirst}
 \usepackage{pgfplots}
 \usepackage{import}
 \usepackage{hyperref}
+\usepackage{pythonhighlight}
 \usepackage[margin=1.0in]{geometry}
 \usepackage[
     style=alphabetic,
@@ -24,21 +26,24 @@
 }
 \pgfplotsset{compat=1.18}
 
-\title{The Value of Uninformed Orderflow on the Uniswap Protocol}
+\title{The Value of Uninformed Orderflow to the Uniswap Protocol}
 \author{
-    Max Holloway \footnote{Disclosure: The authors do not own \texttt{UNI} token, nor are they affiliated with Uniswap Labs nor any of its affiliates. This research was funded by a grant from the Uniswap Foundation. Any opinions and results stated here are those of the authors, not of Uniswap Foundation nor any of its affiliates. Nothing in this paper should be construed as financial advice.} \\ 
+    Max Holloway \footnote{Disclosure: The authors do not own \texttt{UNI} token, nor are they affiliated with Uniswap Labs or any of its affiliates. This research was funded by a grant from the Uniswap Foundation. Any opinions and results stated here are those of the authors, not of the Uniswap Foundation or its affiliates. Nothing in this paper should be construed as financial advice.} \\
     \texttt{
         \href{mailto:max@xenophonlabs.com}{\color{black}{max@xenophonlabs.com}}
-    } \and
-    Elijah \\
-    \texttt{
-        \href{mailto:elijah@duality.xyz}{\color{black}{elijah@duality.xyz}}
-    }
+    } 
+    % \and
+    % Elijah \\
+    % \texttt{
+    %     \href{mailto:elijah@duality.xyz}{\color{black}{elijah@duality.xyz}}
+    % }
 }
 
 % \newcommand{\todo}{\textbf{\textsc{\newline Todo: }}}
+\newmdtheoremenv{definition}{Definition}%[section]
+\newmdtheoremenv{theorem}{Theorem}%[section]
 
-\date{December 2022}
+\date{January 2023}
 
 \begin{document}
 
@@ -46,17 +51,18 @@
     \maketitle    
     \import{sections/}{0abstract}
     
-    % % Body materials
+    % Body materials
     \import{sections/}{1introduction}
     \import{sections/}{2value-to-LPs}
     \import{sections/}{3value-to-protocol}
-    \import{sections/}{4discussion.tex}
-    \import{sections/}{5conclusion.tex}
+    \import{sections/}{4how-to-incentivize}
+    \import{sections/}{5discussion}
+    \import{sections/}{6conclusion}
     
     % Ending materials
     \appendix
     \newpage
-    % \import{sections/}{Aapp1}
+    \import{sections/}{A1-python-optimal-sandwich}
 
     \newpage
     \printbibliography
