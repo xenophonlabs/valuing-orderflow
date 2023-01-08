@@ -10,7 +10,7 @@
 \usepackage{import}
 \usepackage{hyperref}
 \usepackage{pythonhighlight}
-\usepackage[margin=1.0in]{geometry}
+\usepackage[margin=1.25in]{geometry}
 \usepackage[
     style=alphabetic,
 ]{biblatex}
@@ -50,19 +50,26 @@
     % Header materials
     \maketitle    
     \import{sections/}{0abstract}
+    \tableofcontents
+    \newpage
     
     % Body materials
     \import{sections/}{1introduction}
     \import{sections/}{2value-to-LPs}
     \import{sections/}{3value-to-protocol}
     \import{sections/}{4how-to-incentivize}
-    \import{sections/}{5discussion}
-    \import{sections/}{6conclusion}
+    \import{sections/}{5conclusion}
     
     % Ending materials
     \appendix
     \newpage
     \import{sections/}{A1-python-optimal-sandwich}
+    
+    \newpage
+    \import{sections/}{A2-data}
+    
+    \newpage
+    \import{sections/}{A3-identifying-uninformed-volume}
 
     \newpage
     \printbibliography
