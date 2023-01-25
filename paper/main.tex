@@ -10,13 +10,13 @@
 \usepackage{import}
 \usepackage{hyperref}
 \usepackage{pythonhighlight}
-\usepackage[margin=1.0in]{geometry}
+\usepackage[margin=1.25in]{geometry}
 \usepackage[
     style=alphabetic,
 ]{biblatex}
 
 % Preamble
-\addbibresource{refs.bib} %Imports bibliography file
+\addbibresource{refs.bib}
 
 \hypersetup{
     colorlinks=true,
@@ -28,7 +28,7 @@
 
 \title{The Value of Uninformed Orderflow to the Uniswap Protocol}
 \author{
-    Max Holloway \footnote{Disclosure: The authors do not own \texttt{UNI} token, nor are they affiliated with Uniswap Labs or any of its affiliates. This research was funded by a grant from the Uniswap Foundation. Any opinions and results stated here are those of the authors, not of the Uniswap Foundation or its affiliates. Nothing in this paper should be construed as financial advice.} \\
+    Max Holloway \footnote{Disclosure: The authors do not own \texttt{UNI} token, nor are they affiliated with Uniswap Labs or any of its affiliates. This research was funded by a grant from the Uniswap Foundation. Any opinions and results stated here are those of the authors, not of the Uniswap Foundation or its affiliates. Henceforth any mention of ``Uniswap'' is in reference to the Uniswap Protocol, unless explicitly stated otherwise. Nothing in this paper should be construed as financial advice or trading advice.} \footnote{Acknowledgments: \href{https://twitter.com/eljhfx}{@elijah}, \href{https://twitter.com/AlanaDLevin}{@AlanaDLevin}, \href{https://twitter.com/thiccythot_}{@thiccythot\_}, \href{https://twitter.com/0x94305}{@0x94305}, \href{https://twitter.com/_julianma}{@\_julianma}, and \href{https://twitter.com/raholloway}{@raholloway} } \\
     \texttt{
         \href{mailto:max@xenophonlabs.com}{\color{black}{max@xenophonlabs.com}}
     } 
@@ -50,21 +50,35 @@
     % Header materials
     \maketitle    
     \import{sections/}{0abstract}
+    % \tableofcontents
+    \newpage
     
     % Body materials
     \import{sections/}{1introduction}
     \import{sections/}{2value-to-LPs}
     \import{sections/}{3value-to-protocol}
     \import{sections/}{4how-to-incentivize}
-    \import{sections/}{5discussion}
+    \import{sections/}{5future-work}
     \import{sections/}{6conclusion}
     
     % Ending materials
     \appendix
     \newpage
     \import{sections/}{A1-python-optimal-sandwich}
+    
+    \newpage
+    \import{sections/}{A2-identifying-uninformed-volume}
 
     \newpage
+    \import{sections/}{A3-liquidity-feedback}
+
+    \newpage
+    \import{sections/}{A3.5-proof}
+    
+    \newpage
+    \import{sections/}{A4-data}
+
+    \clearpage
     \printbibliography
     
 

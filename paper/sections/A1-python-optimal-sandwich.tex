@@ -30,11 +30,11 @@ See the following figure for python-like pseudocode implementation.
             if trading_this_tick_itself_is_profitable(gas_fee_per_tick, curtick_max_size):
                 return curtick_max_size + rest_of_order_size
             else:
-            return 0
+                return 0
             
         else:
             if trading_this_tick_itself_is_profitable(gas_fee_per_tick, v2_size):
-            return v2_size
+                return v2_size
             else:
                 return 0
 \end{python}

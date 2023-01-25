@@ -1,1 +1,10 @@
 \section{Conclusion} \label{section:conclusion}
+    In this paper, we formalize an Uniswap-specific notion of orderflow information, as well as propose the markout metric for measuring it. 
+    % We provide a conservative lower bound on the value that uninformed orders create for Uniswap LPs, and we use historical sandwich attack data to make a more robust lower bound on the value that uninformed orders create for Uniswap LPs. We then turn our attention to how much the protocol should value uninformed orderflow, and we provide a framework for valuing uninformed orderflow based on hypothetical protocol fees. We then discuss methods through which the protocol can incentivize uninformed orderflow.
+
+    We were surprised to find that the value of uninformed orderflow to LPs may be over 1.5x that of the fees paid by uninformed traders, due to the large quantity of sandwich volume. This leads the protocol to an ethical dilemma: should the protocol give boosted incentives to interfaces that generate sandwiched trades, or should the protocol avoid sandwich incentives and generate less volume?
+
+    Irrespective of the sandwich dilemma, we advise that the protocol refrain from any incentive program until the protocol generates revenue. If and when it does generate revenue, we suggest that the protocol incentivize interface integrations, and potentially also interface orderflow. These incentives, if carefully implemented, could meaningfully increase the quantity of uninformed orderflow, helping the exchange to grow sustainably in the long run.
+    
+
+    Uninformed orderflow can create immense value for the protocol. We hope that the Uniswap community can harness the frameworks and methodologies put forward here to harness this value to grow the protocol.

@@ -1,13 +1,13 @@
 \section{Introduction} \label{section:intro}
 
     \textbf{The Uniswap protocol}.
-        The Uniswap protocol is a collection of smart contracts that enable liquidity providers (LPs) to passively make a market on pairs of fungible tokens. LPs deposit tokens into a pool, and traders can place orders against the liquidity in the pool. The price that traders receive is computed in smart contracts based on the state of the pool; importantly, LPs are not required to change their liquidity positions to facilitate trades on the pool. In contrast to limit orderbooks -- where market makers generate revenue by quoting higher asking prices and lower selling prices -- Uniswap's LPs earn a fee on each order that is proportional to the order's volume.
+        The Uniswap protocol is a collection of smart contracts that enable liquidity providers (LPs) to passively market make on pairs of fungible tokens. LPs deposit tokens into a pool, and traders can place orders against the liquidity in the pool. The price that traders receive is computed in smart contracts based on the state of the pool; importantly, LPs are not required to change their liquidity positions to facilitate trades on the pool. In contrast to limit orderbooks -- where market makers generate revenue by quoting higher asking prices and lower bidding prices -- Uniswap's LPs earn a fee on each order that is proportional to the order's volume.
         % This makes Uniswap an AMM: automated market maker.
 
-        Since the tokens traded on Uniswap have time-dependent demand, and the price quoted by an Uniswap pool does not utilize a time term, the prices quoted by the pool do not always align with those of external trading venues. In the case of Uniswap V2, the only way of changing the price quoted by a pool is to place an order on the pool \cite{v2Core}. Although this is technically not the case in Uniswap V3, since LPs can set their liquidity positions with different price bounds, the cost of blockspace makes it impractical for LPs to affect price discovery by updating and cancelling liquidity positions \cite{v3Core}. This marks another difference between Uniswap and the prevailing orderbook-based centralized exchanges, where liquidity providers can remove limit orders to adjust the price without incurring an order cancellation cost. In both Uniswap V2 and V3, price discovery is primarily driven by arbitrageurs.
+        Since for many assets, price discovery happens on off-chain trading venues (or on other DEXs), the prices that Uniswap quotes is often different than those venues. In the case of Uniswap V2, the only way of changing the price quoted by a pool is to swap the tokens in the pool \cite{v2Core}. Although this is technically not the case in Uniswap V3, since LPs can set their liquidity positions with different price bounds, the cost of blockspace makes it impractical for LPs to affect price discovery by updating and cancelling liquidity positions \cite{v3Core}. This marks another difference between Uniswap and the prevailing orderbook-based centralized exchanges, where liquidity providers can remove limit orders to adjust the price without incurring an order cancellation cost.
 
         Under most conditions, taking the other side of an arbitrageur's trade is a very bad deal for LPs. The more general phenomenon of trading between parties with asymmetric information is known in game theory as \textit{adverse selection}. % TODO cite some paper about adverse selection
-        Perhaps obviously, agents with more information about the ``true'' value of a financial product than their counterparty can use this information to place better trades. 
+        Perhaps obviously, agents with more information about the ``true'' value of a financial product than their counterparty can use this information to out-trade them. 
         And since bilateral exchange of common-value assets is a zero-sum game, % TODO check this statement, and perhaps re-word it
         it follows that the agent who gets the better deal -- typically the agent with better information -- profits at the expense of their counterparty. This is relevant in the case of Uniswap, where LPs' trading strategy is fixed by the automated market maker, and arbitrageurs make money at the expense of LPs. % TODO add note about long-term profitability of LPs from Dave White's piece
         
@@ -68,9 +68,11 @@
     We do this by introducing a notion of eventual-correctness, whereby we say an order was uninformed if the LP taking the other side of that order was profitable after some period of time following the order. What follows is the formal definition.
 
     \begin{definition}[$h$-uninformedness]
-        Let $S_t$ be the true price of the pool's token0 at time $t$, and let $P_t$ be the pool-given price at time $t$; these are both random variables. Then for an Uniswap order, we define the \textit{net trade vector} as the amount of the tokens provided to the pool: $\textbf a  = [a_0, a_1]^\text T \in \mathbb R^2$, with units of the respective tokens. We can now define what it means for an order to be uninformed.
+        % Let $S_t$ be the true price of the pool's token0 at time $t$, and let $P_t$ be the pool-given price at time $t$; these are both random variables.
+        Let $P_t$ be a random variable representing the price of an Uniswap pool's token0 at time $t$.
+        Then for an Uniswap order, we define the \textit{net trade vector} as the amount of the tokens provided to the pool: $\textbf a  = [a_0, a_1]^\text T \in \mathbb R^2$, with units of the respective tokens. We can now define what it means for an order to be uninformed.
 
-        For some fixed quantity of time $h \in \mathbb R+$, we say that an Uniswap order $\textbf a$ placed at time $t$ is \textit{$h$-uninformed} if
+        For some fixed time lag $h \in \mathbb R+$, we say that an Uniswap order $\textbf a$ placed at time $t$ is \textit{$h$-uninformed} if
             $$\mathbb E[P_{t+h} \ | \ \textbf a] = \mathbb E[P_{t+h}].$$  
     \end{definition}
 
@@ -80,11 +82,10 @@
     % TODO mention work on the continuous-time profitability of LPs
     The profitability of Uniswap LPs is not a new topic of research. 
     Angeris et al. provided analytic formulas for the profitability of Uniswap LPs between discrete points in time \cite{angeris2019analysis}. % TODO maybe get rid of this
-    White demonstrated that Uniswap LPs with nearly-zero fees outperform those with higher fees under specific volatility and drift conditions. % TODO cite Uniswap's Financial Alchemy https://research.paradigm.xyz/uniswaps-alchemy
-    A number of reports have shed light on the historical profitability of Uniswap V3. % TODO cite defi guy, fbifemboy's medium article (https://crocswap.medium.com/usage-of-markout-to-calculate-lp-profitability-in-uniswap-v3-e32773b1a88e), thiccythot (https://dune.com/thiccythot/uniswap-markouts, https://medium.com/friktion-research/defi-deep-dive-uniswap-part-2-8be77a859f47), Uniswap V3 profitability analyses (_maybe_ https://uniswap.org/blog/uniswap-v3-dominance, https://uniswap.org/blog/fee-returns)
+    White demonstrated that Uniswap LPs with nearly-zero fees outperform those with higher fees under specific volatility and drift conditions \cite{davewhiteuniprofitability}.
+    A number of reports have shed light on the historical profitability of Uniswap v3 (\cite{univ3Fees}, \cite{v3dominance}, \cite{thiccythot1}, \cite{thiccythot2}, \cite{crocswap1}, \cite{crocswap2} ) LPs. 
 
-    \textbf{This paper.} The aim of this paper is to find the value that uninformed orderflow creates for the protocol, as well as discuss the ways through which the protocol can incentivize this orderflow.
+    \textbf{This paper.} The aim of this paper is to find the value that uninformed orderflow creates for the Uniswap Protocol on Ethereum Mainnet, as well as discuss the ways through which the protocol can incentivize this orderflow.
     We begin in section \ref{section:lp-oflow-value} 
-    by finding the marginal revenue that uninformed orderflow creates for LPs, and along with the marginal increase in liquidity that we would expect to come from an increase in revenue. In section \ref{section:protocol-lpcapital-value}, we provide an opinionated framework for how much the protocol should value an increase in liquidity.
+    by finding the marginal revenue that uninformed orderflow creates for LPs. In section \ref{section:protocol-lpcapital-value}, we provide an opinionated framework for how much the protocol should value an increase in liquidity.
     We then give recommendations for how the protocol should incentivize uninformed orderflow -- if at all -- in section \ref{section:how-to-incentivize}. Finally, we provide areas for future work in section \ref{section:future-work} and conclude in section \ref{section:conclusion}.
-    % We provide protocol recommendations and directions for future research in section \ref{section:discussion}, and we conclude this research in section \ref{section:conclusion}.

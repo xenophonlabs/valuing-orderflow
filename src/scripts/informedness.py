@@ -24,7 +24,7 @@ def informedness(swap_data: pd.DataFrame, sandwich_data: pd.DataFrame):
 
     """
 
-    from_router = swap_data.viaRouter.apply(lambda x: False if x==0 else True) # informed if not from a router
+    from_router = swap_data.viaRouter.apply(lambda x: False if str(x)=="0" else True) # informed if not from a router
 
     if len(sandwich_data) > 0:
         sandwich_top_bun_txns = {x for x in sandwich_data.top_bun_txn.values}

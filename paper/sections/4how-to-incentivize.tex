@@ -1,1 +1,97 @@
 \section{How to Incentivize Uninformed Orderflow} \label{section:how-to-incentivize}
+
+Assuming we know how valuable a dollar of uninformed orderflow is for the protocol, we can now discuss ways that the protocol might incentivize it. 
+The incentive design space is large, and we focus only on two approaches: direct user incentives and user interface incentives.
+
+\subsection{Incentivizing Users} \label{subsection:direct-incentives}
+    Perhaps the most intuitive way to incentivize uninformed orderflow is to directly incentivize the users who produce uninformed orderflow. %But the devil lays in the details, as we must overcome a number of issues: %(1) categorizing orders as informed vs. uninformed is difficult and imprecise, (2) making the incentive program permissionless requires us to design it to be sybil resistant, and (3) 
+    Here we describe our best attempt at designing a direct-incentivization mechanism, and we then describe all of the issues that make this mechanism difficult to impelement in practice.
+
+    \textbf{A Direct Incentive Mechanism}.
+    We begin by initializing a smart contract -- potentially on a chain with low gas fees -- to hold the rewards, and the Uniswap Foundation treasury funds this smart contract with some quantity $R$ of UNI token. There is a function on the contract, \texttt{redeemRewards(amount, rewardsSignature)}, that traders can use to redeem UNI rewards, where they redeem an amount that \texttt{amount} that is approved and digitally signed by a Uniswap Foundation-owned address. The amount that an address can claim would be calculated as some unitless multiple, $\alpha$, of the sum of positive markouts that their orders generated for LPs of the protocol; if $\rho: \mathbb R^2 \rightarrow \mathbb R^+ \cup \emptyset$ is the function mapping from order to reward, it would be calculated as follows:
+        \begin{equation}
+            \rho(\textbf a) = \alpha p_U \cdot \max(m_{\textbf a}, 0),
+        \end{equation}
+    where $p_U$ is the price of token1 denoted in units of UNI (e.g. $p_U$).
+    This quantity could be calculated off-chain using an open-source markout calculation that operates on publicly-known blockchain data. This calculation would be performed by a trusted, non-censoring operator, and users could query this operator to create a signature for the user to pass into \texttt{redeemRewards}.
+
+
+    \textbf{Issue \#1 with Uninformed Orderflow Direct Incentive Mechanism: wash trading}.
+    Since we are rewarding positive LP markout trades, while not disincentivizing negative LP markout trades, we must ensure that the amount paid for wash trading is negative in expectation, otherwise this can be gamed. For instance, if a wash trader places an Ethereum transaction composed of a buy order $\textbf a_1$ and sale order $\textbf a_2$ at time $t$, then the wash trader's cost of execution is approximately $\gamma p_U P_t(||\textbf a|| + ||\textbf a_2||)$, where $P_t$ is the pool price in units of token1-per-token0 at the time of the swaps. The wash trader's revenue is $\alpha p_U ( \max{(m_{\textbf a_1}, 0)} + \max{(m_{\textbf a_2}, 0)} )$. Thus, for them to be profitable\footnote{Notice that this is a necessary condition for wash trader profitability, but it is not sufficient. In reality, the wash trader would need to pay gas fees and pay slippage, and thus would still have negative profit, even if the left- and right-hand sides of the inequality were equal.}, they must have $$\gamma p_U P_t(||\textbf a|| + ||\textbf a_2||) < \alpha p_U ( \max{(m_{\textbf a_1}, 0)} + \max{(m_{\textbf a_2}, 0)} ).$$
+    Since $||a_1|| \approx ||a_2||$ and $m_{\textbf a} \approx - m_{\textbf a_2}$, we can derive a similar profit condition, that $$2\gamma p_U P_t||\textbf a|| < \alpha p_U |\max{(m_{\textbf a}, 0)}| = \alpha p_U ||\textbf a|| \cdot |P_{t+h} - \overline p(\textbf a)|,$$ thus
+    $$\gamma < \frac{\alpha}{2} \cdot \frac{|P_{t+h} - \overline p(\textbf a)|}{P_t}.$$
+
+    Therefore, if the wash trader aims to be profitable in expectation, they must have
+        $$\gamma < \frac{\alpha}{2} \cdot \mathbb E \left[ \frac{|P_{t+h} - \overline p(\textbf a)|}{P_t} \right] \approx \frac{\alpha}{2} \cdot \mathbb E \left[ \frac{|P_{t+h} - P_t|}{P_t} \right].$$
+
+    Rearranging, we get that the wash trader is profitable only when 
+        $$\alpha > \frac{2\gamma }{\mathbb E \left[ \frac{|P_{t+h} - P_t|}{P_t} \right]}.$$
+
+    Wash trading is profitable when the rewards portion is high, pool fees are low, and markout variance is high. The markout variance is directly determined by the variance in the price of the underlying assets in the pool. This makes intuitive sense, due to the fact that wash traders are price-neutral, whereas the protocol must pay out a large quantity in a case where price moves by a large percentage.
+    
+    In order for the protocol to make wash trading unprofitable in expectation, they would need to set the rewards portion $\alpha$ such that
+        \begin{equation}
+            \alpha < \frac{2\gamma }{\mathbb E \left[ \frac{|P_{t+h} - P_t|}{P_t} \right]}.
+        \end{equation}
+    
+    This bound should suffice to avert the wash trade attack on a direct incentivization mechanism.
+    % To be clear, this is not a proof that Issue \#1 is resolved, this should be understood as a necessary condition for the rewards proportion $\alpha$.
+    
+    
+    \textbf{Issue \#2 with Uninformed Orderflow Direct Incentive Mechanism: it's weird}.
+    On the one hand, the concept of incentivizing trades based on the markout they create for LPs is quite strange, since it is effectively a consolation prize for bad trading. On the other hand, it is an interesting idea to refund some of a trader's losses, while still making it better in expectation for the trader to make good trades. Whether this is good or bad is largely a matter of protocol and user preferences.
+
+    \textbf{Issue \#3 with Uninformed Orderflow Direct Incentive Mechanism: it is indifferent to trader size}.
+    The fact that this mechanism pays proportionally to each trade's markout is not great. In a perfect world, we may want to incentivize smaller trades more, since they are more likely to be uninformed. This would lead us to give UNI incentives according to a non-decreasing function of the markout that is concave on positive reals. For instance, instead of rewarding an order $\textbf a$ with $\alpha \max{(m_{\textbf a}, 0)}$, we would reward it with something like $\beta \log \left(1 + \frac{\max{(m_{\textbf a}, 0)}}{P_t ||\textbf a||} \right)$ for some $\beta \in \mathbb R^+$, or $\min{ ( \max{(m_{\textbf a}, 0)}, \omega )}$ for some maximum reward $\omega \in \mathbb R^+$. The issue here is that concave rewards are not sybil-resistant: rational large traders would simply split their trades into smaller orders such that they can be rewarded higher than they would be if they placed large orders.% a greater quantity, still getting the same rewards.
+    
+    \textbf{Issue \#4 with Uninformed Orderflow Direct Incentive Mechanism: no reason to believe it's sticky}.
+    Suppose that direct uninformed orderflow incentivization was a great success, leading to significantly larger quantity of orderflow, with little-to-no gaming of the mechanism. What should lead us to believe that the uninformed traders using it will stick around once the incentives are turned off?
+    % Perhaps it is true that these uninformed traders would be sticky, but this is beyond the realm of topics that we are comfortable commenting on. 
+    % With that said, there are a host of examples from behavioral economics of rewards programs targeted at market participants with imperfect information.
+    % It will likely be more fruitful to investigate those mechanisms than to blindly incentivize based on this value. 
+    For more information on quantitative approaches to determining the expected stickiness of an uninformed orderflow incentivization program, see appendix \ref{appendix:oflow-liq-feedback}.
+
+\subsection{Incentivizing User Interfaces} \label{subsection:interface-incentives}
+    Instead of incentivizing users who create uninformed orderflow directly, we could instead incentivize the user interfaces that connect users to the protocol. Examples of potential interfaces include Robinhood, Coinbase Wallet, 1Inch Network, Yearn Finance, and Perp Protocol. These interfaces, and others, could provide a gateway for uninformed orderflow onto Uniswap protocol, and the Uniswap protocol could incentivize these interfaces to send uninformed orderflow to the protocol. In this section, we review two paradigms that the Uniswap protocol could use to incentivize these interfaces.
+
+    \subsubsection{Incentivizing Orders}
+        Similar to section \ref{subsection:direct-incentives}, we could incentivize interfaces based on the quantity of uninformed orderflow that they generate. The incentives program would closely resemble that of the direct user incentivization, except we would calculate the empirical markout of all of the orders placed through the interface. Interface operators would have a mechanism through which they can signal which orders they processed; this could be done by requiring users sign an attestation that they used the interface. Interface operators would specify an address that should be eligible to withdraw rewards. Aside from these details, we could create an interface incentivization mechanism that mirrors the direct incentive approach in section \ref{subsection:direct-incentives}.
+
+        \textbf{Benefits of interface order incentivization}.
+        There are benefits to incentivizing interfaces based on the orders they process, rather than directly incentivizing users. First of all, if we trust the interface operator to not artificially push their own volume through the interface in order to generate rewards, then we do not need to worry about wash trading. While this trust assumption is unreasonable under the direct rewards mechanism, it may be more reasonable depending on the interface operators involved. %Not only does this trust assumption preclude the wash trading problem, but it also simplifies the administration of the incentive program.
+
+        Furthermore, incentivizing interface orderflow retains many of the benefits apparent in the direct incentivization mechanism, chiefly among them the alignment between orderflow producers (users, interfaces) and the protocol's LPs.
+
+        Incentivizing interface orderflow is operationally much simpler. The Uniswap Foundation would not need to go through the hassle of creating a rewards claiming interface and the potential security vulnerabilities that would entail. Instead, they would only need to manage contact with a small number of interfaces.
+
+        % Furthermore, interface incentivization creates an opportunity for Uniswap to bolster its business relationships with interfaces, as well as keep these interfaces from integrating with another decentralized exchanges.
+
+        \textbf{Downsides of interface order incentivization}.
+        There are two main downsides to incentivizing interface orderflow: interface incentives would not necessarily accrete to interface users, and these integrations are not necessarily sticky.
+
+        The rewards that are paid to interfaces will likely accrete in value for those interfaces, and there is no reason to believe that interfaces will route those rewards back to the users who created in the uninformed orderflow. While it is possible that the protocol could stipulate that a portion of the rewards go to users of the interface, this would introduce operational complexity. Paying interfaces for uninformed orderflow is obviously suboptimal, since it effectively leads to worse pricing for users unless the interface gives all of the rewards to its users. However, if this orderflow would not have existed in the absence of the interface, then it may be fair -- at least, fair in the Shapley sense \cite{shapley1997value} -- to give a cut of the uninformed orderflow value to the interface. Nevertheless, the only situations in which the protocol should be willing to pay interfaces are those situations where the orderflow would not have existed without the interface.
+
+        The second, larger issue with interface order incentivization is that it does not necessarily lead to sticky orderflow. Once the incentive program halts, so do the rewards for the interface. Unless interface operators agree otherwise, this means that the interface has no further incentive to route orderflow to Uniswap. Of course, they may continue to route orderflow to Uniswap, but there is no reason to believe that they would do so. Since the topic of interface orderflow stickiness relies so much on the particular interface being incentivized, we refrain from further speculation on interface orderflow stickiness.
+
+
+    \subsubsection{Incentivizing Integrations}
+        Yet another approach for incentivizing interface orderflow is by incentivizing interfaces to integrate with the Uniswap protocol. For instance, if a team is building an interface, the Uniswap Foundation could sponsor the development work needed for the interface to integrate with the protocol. Or, similarly, the protocol could hire developer relations person or small team to help evangelize the Uniswap protocol and help customers to integrate. By sponsoring an interface integration, the protocol would effectively invest in the future orderflow created by that interface.
+
+\subsection{Incentivizing Sandwiches}
+    In sections \ref{subsection:direct-incentives} and \ref{subsection:interface-incentives}, we utilize the observed markout when determining the rewards that an order should receive, despite the fact that uninformed orders also occasionally lead to value from the front- and back-run orders that surround them. Why should the protocol not also pay for the value created by the front- and back-run orders?
+
+    We offer no answer to this question, but we do provide two perspectives.
+
+    \textbf{Why the protocol should incentivize sandwich orders}.
+    In a world where the Uniswap protocol generates revenues on its volume, it clearly benefits from the volume generated by sandwich attacks. As we demonstrated in section \ref{section:protocol-lpcapital-value}, sandwich volume accounts for approximately 13\% of total volume on the USDC-ETH-0.05\% pool, and each dollar of fees paid by uninformed volume generates an additional 70¢ of sandwich fees, on average. Ignoring sandwich fees when incentivizing the pool would be to ignore almost half of the value created by uninformed orderflow.
+
+    \textbf{Why the protocol should not incentivize sandwich orders}.
+    On the other hand, incentivizing sandwiched orders leads to worse user outcomes in the case of an interface orderflow incentivization program. Sandwich revenues come directly out of the pockets of users (see Theorem 2 in \cite{heimbach2022eliminating} for the proof).
+
+    \textbf{Final word on sandwiches.}
+    Whether the protocol should give additional incentives for sandwiched orders is a decision for the protocol's tokenholers. While we are happy to provide as much supporting information as possible for the protocol to make this decision, we do not have a recommendation regarding sandwich incentivization.
+
+\subsection{Recommendation}
+    We recommend that the protocol wait until it generates revenue before implementing an uninformed orderflow incentivization program. Without revenue, we have no coherent way of valuing the uninformed orderflow that the protocol would generate via an uninformed orderflow incentives program.
+
+    Once the protocol generates revenue, we believe that interface integration incentives are the most cost-efficient route to growth of uninformed orderflow. If these opportunities are sparse, then we recommend that the protocol advance on interface orderflow incentives. We also believe that direct incentives have the potential to create substantial value, however we believe that they require further research on their game theoretic properties.
