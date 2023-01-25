@@ -1,0 +1,70 @@
+\section{Additional Data and Graphs} \label{appendix:data}
+
+% \subsection{Sandwich Data} \label{appendix:sandwich-data}
+
+% \begin{adjustbox}{tabular=ll,center}
+
+% \end{adjustbox}
+
+% Sandwich Data
+\begin{table}[h]
+    \begin{center}
+        \begin{tabular}{ll}
+        \hline
+        & {\footnotesize Transaction Hash}  \\
+        \hline
+         {\footnotesize USDC-ETH-0.05\% Front-run Transaction} & {\tiny 0x388f697fe428b4d3124c943673e64712a22d244548ff111e528b609add5a3bdd} \\
+         {\footnotesize USDC-ETH-0.05\% Victim Transaction}    & {\tiny 0xc89645dca26308fb5c02a5ba884ba37e3a8105e427b1c33ce9a835be79e02210} \\
+         {\footnotesize USDC-ETH-0.05\% Back-run Transaction}  & {\tiny 0x3bd54dc1de6f8de4f50862249df8a4b1ab5020d0c3ae9d0ebcfe80650b3465f4} \\
+         {\footnotesize ETH-USDT-0.05\% Front-run Transaction} & {\tiny 0x459c3ac6fac91eaa3cfae16195aafc9b5025428efe300b0f4050426fe89a683f} \\
+         {\footnotesize ETH-USDT-0.05\% Victim Transaction}    & {\tiny 0x1cdae41c0ecc86858fe3b72e88b9f61067b000bc4cbcf8e28ddb3f7d86643496} \\
+         {\footnotesize ETH-USDT-0.05\% Back-run Transaction}  & {\tiny 0xeecb545a2512fafb9bb0d64962708fe162a45d3f7cb07127cdccb2a4e9c55f08} \\
+         {\footnotesize DAI-USDC-0.01\% Front-run Transaction} & {\tiny 0xe069c3cd0805e38bb1a56417107eda097b0edac8bd091c983d9680cc86c21005} \\
+         {\footnotesize DAI-USDC-0.01\% Victim Transaction}    & {\tiny 0xbf8cd2a37d7ec6ad9ec4b405d33bc31c4a796d28880a647d69f49bad7d6ab854} \\
+         {\footnotesize DAI-USDC-0.01\% Back-run Transaction}  & {\tiny 0xed873ada8a3b448edfd4806378ce238bbe7be2f0594340815bc05b6133818efb} \\
+         {\footnotesize LDO-ETH-0.30\% Front-run Transaction}  & {\tiny 0x27c388e5eb45b6397e9d0f6e56bcde79b6e40034796d74722e3029babf31f11b} \\
+         {\footnotesize LDO-ETH-0.30\% Victim Transaction}     & {\tiny 0xd269227266ea5fa237612547596fe825fbe81d142a1fa33b07562fd3aa108b6a} \\
+         {\footnotesize LDO-ETH-0.30\% Back-run Transaction}   & {\tiny 0x1bcb98a5e82456063c2b600b3927806c86be200cba1b4d57d04285a0e02db997} \\
+        \hline
+        \end{tabular}
+        \caption{Some example sandwich attacks on Uniswap V3 pools.}
+        \label{Tab:sandwiches}
+    \end{center}
+\end{table}
+
+\begin{table}[h]
+    \begin{center}
+        \begin{tabular}{lrrrrr}
+        \hline
+           &   {\tiny Uninformed Volume \%} &   {\tiny  Front- Back-run Volume \%} &   {\tiny Victim Volume \%} &   {\tiny Sandwich Count} &   {\tiny Sandwich Multiple} \\
+        \hline
+         {\footnotesize USDC-ETH-0.05\%} &               33.0827 &                 13.5872    &         2.3787    &             3756 &              0.6969 \\
+         {\footnotesize ETH-USDT-0.05\%} &               44.869  &                 26.8018    &         1.44971   &             2765 &              1.4834 \\
+         {\footnotesize DAI-USDC-0.01\%} &               46.2412 &                  0.506031  &         0.0577408 &                9 &              0.0111 \\
+         {\footnotesize LDO-ETH-0.30\%}  &               29.0025 &                  1.87641   &         1.58727   &               85 &              0.0692 \\
+         {\footnotesize USDC-ETH-0.30\%} &               14.2243 &                  0.0872036 &         0.0533355 &                4 &              0.0062 \\
+         {\footnotesize USDC-USDT-0.01\%}  &               44.695 &                  2.87004   &         0.391578   &               513 &              0.0686 \\
+         {\footnotesize WBTC-ETH-0.05\%} &               32.3354 &                 14.5738    &         2.64851   &              831 &              0.8205 \\
+        \hline
+        \end{tabular}
+        \caption{Pool-level uninformed volume and sandwich data.}
+    \end{center}
+\end{table}
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[scale=.43]{figs/swap-sources/USDC-ETH-0.05.png}
+    \includegraphics[scale=.43]{figs/swap-sources/ETH-USDT-0.05.png}
+    \includegraphics[scale=.43]{figs/swap-sources/USDC-USDT-0.01.png}
+    \includegraphics[scale=.43]{figs/swap-sources/LDO-ETH-0.30.png}    
+    \caption{The counts (left column) and volume (right column) of swaps that originate from each interface. We see that although most \textit{orders} come from the Uniswap router in each of these pools, most of the \textit{volume} does not go through any known router at all.}
+\end{figure}
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[scale=.43]{figs/meat-sources/USDC-ETH-0.05.png}
+    \includegraphics[scale=.43]{figs/meat-sources/ETH-USDT-0.05.png}
+    \includegraphics[scale=.43]{figs/meat-sources/USDC-USDT-0.01.png}
+    \includegraphics[scale=.43]{figs/meat-sources/LDO-ETH-0.30.png}
+    \caption{The counts (left column) and volume (right column) of sandwich victim orders that originate from each router. We see that most sandwiched orders and sandwiched volume come from the Uniswap router for each of these pools.}
+\end{figure}

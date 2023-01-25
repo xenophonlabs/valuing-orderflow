@@ -55,9 +55,6 @@ def whole_kit_and_kaboodle():
         [
             'BTC/USDT',
             'ETH/USDT',
-            'LINK/USDT',
-            'AAVE/USDT',
-            'AVAX/USDT'
         ],
         '1m',
         '2022-06-01T00:00:00Z',

@@ -1,3 +1,5 @@
 paper/*.bcf
 paper/*.xml
 paper/*.synctex.gz
+
+__pycache__

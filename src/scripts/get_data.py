@@ -11,7 +11,6 @@ for the inspiration on the sandwich code (and the MIT license!).
 import asyncio
 from collections import defaultdict
 import datetime as dt
-import json
 
 
 from pprint import pprint
@@ -21,6 +20,7 @@ import numpy as np
 import pandas as pd
 
 from informedness import informedness
+import config
 
 def price_token0(swap):
     """
@@ -79,7 +79,7 @@ def prep_swap_data(swaps, start_timestamp=None, end_timestamp=None):
                 "amount1": float(swap["amount1"]),
                 "amountUSD": float(swap["amountUSD"]),
                 "boughtToken0": 1 if (float(swap["amount0"]) < 0) else 0, # it's a buy if amount0 is positive
-                "viaRouter": router_addresses[swap["sender"]] if (swap["sender"] in router_addresses) else 0,
+                "viaRouter": router_addresses[swap["sender"]] if (swap["sender"] in router_addresses) else "0",
                 "price0After": price_token0(swap),
                 "price1After": price_token1(swap),
             }
@@ -109,7 +109,7 @@ async def get_basic_swap_data(pool, cutoff_timestamp, end_timestamp, session, po
     # note: if we wanted to make this super fast, we'd set a manual lookback timestamp
     # and run all of the requests, e.g. 10_000 requests, in parallel. This would fucking
     # blast the Graph, but it would be faster. No need for this currently.
-    for i in range(1_001):       
+    for i in range(5_001):       
         query = '''
         {
             swaps(
@@ -187,19 +187,25 @@ async def get_basic_swap_data(pool, cutoff_timestamp, end_timestamp, session, po
         # concatenate all swaps that have timestamp >= cutoff_timestamp
         allswaps += swaps[:j]
         if j != len(swaps):
-            #print("done, since the final swap is in the interior of the result batch")
+            print("done, since the final swap is in the interior of the result batch")
             break
 
         if i % 10 == 0:
-            print(f"\t{pool_name} swap_data - {dt.datetime.fromtimestamp(sup_timestamp)}")
+            print(f"\t{pool_name} swap_data - {dt.datetime.fromtimestamp(sup_timestamp)} - i={i}")
             
     #pprint(allswaps[-1])
-            
+
+    print(f"stopping at time {sup_timestamp}") 
     return prep_swap_data(allswaps, cutoff_timestamp, end_timestamp)
 
 
 def make_sandwich_data(swap_data: pd.DataFrame) -> pd.DataFrame:
     sandwich_data = {}
+
+    swap_txn_interfaces_ = {
+        x.txnHash: x.viaRouter
+        for _, x in swap_data.iterrows()
+    }
 
     for block_number in swap_data['blockNumber'].unique():
         blockData = swap_data[swap_data['blockNumber']==block_number]
@@ -217,7 +223,15 @@ def make_sandwich_data(swap_data: pd.DataFrame) -> pd.DataFrame:
                     sameTradingFlow = sandwichedSwap['amount1'] * senderSwapData.iloc[0]['amount1'] > 0 # same direction
                     withCloseTradeTx = senderSwapData.iloc[0]['amount1'] * senderSwapData.iloc[-1]['amount1'] < 0 # different direction
 
-                    if withMiddleTx and sameTradingFlow and withCloseTradeTx:
+                    # two more criteria (added by Max)
+                    not_via_router = swap_txn_interfaces_[senderSwapData.iloc[0].txnHash] == "0"
+                    if senderSwapData.iloc[-1].amount0 == 0:
+                        meets_sandwich_differential = False
+                    else:
+                        meets_sandwich_differential = 100*abs(- (senderSwapData.iloc[0].amount0 / senderSwapData.iloc[-1].amount0) - 1) < config.MAX_SANDWICH_DIFFERENTIAL
+
+                    if withMiddleTx and sameTradingFlow and withCloseTradeTx and meets_sandwich_differential and not_via_router:
+            
                         # calculate start and end price 
                         ethStartPrice = abs(senderSwapData.iloc[0]['amount0'] / senderSwapData.iloc[0]['amount1'])
                         ethEndPrice = abs(senderSwapData.iloc[-1]['amount0'] / senderSwapData.iloc[-1]['amount1'])
@@ -247,6 +261,7 @@ def make_sandwich_data(swap_data: pd.DataFrame) -> pd.DataFrame:
                             
                             "buns_trader": sender,
                             "meat_trader": sandwichedSwap.sender,
+                            "meat_interface": swap_txn_interfaces_[sandwichedSwap.txnHash],
                             
                             "top_bun_amount0": senderSwapData.iloc[0].amount0,
                             "meat_amount0": sandwichedSwap.amount0,
@@ -321,44 +336,16 @@ async def get_all_data_single_asset(pool_name, pool_addr, start_timestamp, end_t
 
 async def whole_kit_and_caboodle():
     # start_timestamp = (dt.datetime.now() - dt.timedelta(days=183)).timestamp()
-    start_timestamp = dt.datetime(year=2022, month=7, day=1).timestamp() # 1673043302 # approx Jan 6th at 05pm eastern
-    end_timestamp =   dt.datetime(year=2023, month=1, day=2).timestamp() # 1673061302 # approx Jan 6th at 10pm eastern
+    start_timestamp = config.start_timestamp # dt.datetime(year=2022, month=7, day=1).timestamp() # 1673043302 # approx Jan 6th at 05pm eastern
+    end_timestamp =   config.end_timestamp   # dt.datetime(year=2023, month=1, day=2).timestamp() # 1673061302 # approx Jan 6th at 10pm eastern
     assert start_timestamp < end_timestamp
     
-    # top pools by volume (in the last 7 days)
-    pools = {
-        # top pools by volume (in the last 7 days)
-        "USDC-ETH-0.05": "0x88e6a0c2ddd26feeb64f039a2c41296fcb3f5640",
-        "USDC-USDT-0.01": "0x3416cf6c708da44db2624d63ea0aaef7113527c6",
-        "ETH-USDT-0.05": "0x11b815efb8f581194ae79006d24e0d814b7697f6",
-        "WBTC-ETH-0.05": "0x4585fe77225b41b697c938b018e2ac67ac5a20c0",
-        "LDO-ETH-0.30": "0xa3f558aebaecaf0e11ca4b2199cc5ed341edfd74",
-        "DAI-USDC-0.01": "0x5777d92f208679db4b9778590fa3cab3ac9e2168",
-
-        # a pool with different fee but same pair as a top volume pool
-        "USDC-ETH-0.30": "0x8ad599c3a0ff1de082011efddc58f1908eb6e6d8",
-    }
-
-    # tells us which assets for each pool we should fill in binance data for
-    # make it a defaultdict so that we don't need to define superfluous assets
-    # like stable pairs
-    pools_to_binance_priced_assets = defaultdict(dict)
-    pools_to_binance_priced_assets.update(
-        {
-            "USDC-ETH-0.05": {"token1": "ETH"},
-            "ETH-USDT-0.05": {"token0": "ETH"},
-            "WBTC-ETH-0.05": {"token0": "BTC", "token1": "ETH"},
-            "LDO-ETH-0.30": {"token1": "ETH"},
-
-            "USDC-ETH-0.30": {"token1": "ETH"},
-        }
-    )
 
     binance_prices = pd.read_csv("./data/binance_prices.csv").set_index("timestampMs")
     async with aiohttp.ClientSession() as session:
         await asyncio.gather(*[
-            get_all_data_single_asset(pool_name, pool_addr, start_timestamp, end_timestamp, binance_prices, pools_to_binance_priced_assets, session)
-            for (pool_name, pool_addr) in pools.items()
+            get_all_data_single_asset(pool_name, pool_addr, start_timestamp, end_timestamp, binance_prices, config.pools_to_binance_priced_assets, session)
+            for (pool_name, pool_addr) in config.pools.items()
         ])
 
     pass

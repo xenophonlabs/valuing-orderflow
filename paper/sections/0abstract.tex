@@ -10,5 +10,8 @@
     % We also present an opinionated framework for how much the protocol should value this uninformed orderflow, as well as recommendations for how the protocol should implement uninformed orderflow incentive programs.
     
     We analyze the relationship between uninformed orderflow and trading fees on Uniswap pools. 
+    We formalize a notion of orderflow information, and we demonstrate that uninformed orderflow's value to LPs is expected to be at least as large as the fees paid.
+    Furthermore, we find that uninformed orderflow creates additional value to LPs in the form of sandwich attacks; from July 1 to Dec 31 of 2022, sandwich attacks compose over 13\% of the volume on USDC-ETH-0.05\% and over 26\% of the volume on ETH-USDT-0.05\% pools on Ehereum Mainnet.
+    Uniswap LPs benefit immensely from these sandwich trades, due to their fees paid and their limited impact on underlying pool reserves; uninformed orderflow that gets sandwiched is up to 5 times more valuable to LPs than uninformed orderflow that does not get sandwiched.
     We also present an opinionated framework for how much the protocol should value uninformed orderflow, as well as recommendations for how the protocol should incentivize it. 
 \end{abstract}

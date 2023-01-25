@@ -4,7 +4,7 @@ Before determining the value that uninformed orderflow creates for the protocol,
 \subsection{Lower Bound I: Uninformed Orderflow's Direct Value to LPs}
     How much value does an uninformed order create for Uniswap LPs?
     % We can start by defining the \textit{amountIn} vector of $\textbf a  = [a_0, a_1]^\text T$ to represent the amount in of the pool's token0 and token1, which has units of the respective tokens. 
-    We define the \textit{token0 volume} of a transaction as $||\textbf a|| = \text{abs}(a_0)$, which has units of token0. Let $\gamma \in (0,1)$ be the fee paid by the trader, $\phi \in \{0, 1/4, 1/5, \dots, 1/9, 1/10 \}$ be the protocol fee. Let the price of the pool at time $t$ be $P_t$, and let the true price of token0 relative to token1 follow a random continuous-time stochastic process $S_t$. To find how much LPs should value this orderflow, we utilize the markout metric.
+    We define the \textit{token0 volume} of a transaction as $||\textbf a|| = \text{abs}(a_0)$, which has units of token0. Let $\gamma \in (0,1)$ be the fee paid by the trader, $\phi \in \{0, 1/4, 1/5, \dots, 1/9, 1/10 \}$ be the protocol fee. Let the price of the pool at time $t$ be $P_t$, and let the true price of token0 relative to token1 follow a continuous-time stochastic process $S_t$. To find how much LPs should value this orderflow, we utilize the markout metric.
 
     \begin{definition}[$h$-Markout]
         For a given time lag $h$ and trade $\textbf{a}$ at time $t$, we define the markout for the order $\textbf{a}$ as 
@@ -12,10 +12,12 @@ Before determining the value that uninformed orderflow creates for the protocol,
         where $d$ is $-1$ if the LPs are selling token0 and $1$ if the LPs are buying token0, and $\bar p(\bf a)$ is the execution price of order $\bf a$, including fees paid to the LP.
     \end{definition}
 
-    Markout embodies the quality of a trade, from the perspective of a market maker, of a trade placed at time $t$ and measured at a time $t+h$ in the future. While a positive value of markout does not imply that an LP's position is profitable long-term, it \textit{does} imply that the LP's trade is profitable at the time $h$ after the trade; a similar statement can be made for negative markout trades. However, this is not a critical flaw to the metric, for the following reason. If we assume that prices follow a zero-drift geometric Brownian motion (GBM), with no mean-reversion terms, then we can also demonstrate that for any lag $h' > h$, $$\mathbb E[\text{markout at time } t + h'] = \text{profit at time } t+h = m_\textbf{a}.$$ % TODO demonstrate that this is true
-    This follows from the fact that the markout is simply a scalar addition and multiplication of the underlying price process $P_t$, and if $P_t$ follows a zero-drift GBM for times greater than $t+h$, our $h$-markout is the the same in expectation as $h'$ markout. In fact, it is not even necessary that $P_t$ follow a GBM; any continuous-time stochastic process $P_t$ that obeys $\mathbb E[P_{t+h'}] = \mathbb E[R_{t+h}]$ for any $h' > h$ suffices for markout to be equal in expectation at and after the lag-time $h$.
+    Markout embodies the quality of a trade, from the perspective of a market maker, of a trade placed at time $t$ and measured at a time $t+h$ in the future. While a positive value of markout does not imply that an LP's position is profitable long-term, it \textit{does} imply that the LP's trade is profitable at the time $h$ after the trade; a similar statement can be made for negative markout trades. However, this is not a critical flaw to the metric, for the following reason. If we assume that prices follow a zero-drift geometric Brownian motion (GBM), then we can also demonstrate that for any lag $h' > h$, $$\mathbb E[\text{markout at time } t + h'] = \text{profit at time } t+h = m_\textbf{a}.$$ % TODO demonstrate that this is true
+    This follows from the fact that the markout is simply a scalar addition and multiplication of the underlying price process $P_t$, and if $P_t$ follows a zero-drift GBM for times greater than $t+h$, our $h$-markout is the the same in expectation as $h'$ markout. In fact, it is not even necessary that $P_t$ follow a GBM; any continuous-time stochastic process $P_t$ that obeys $\mathbb E[P_{t+h'}] = \mathbb E[P_{t+h}]$ for any $h' > h$ suffices for markout to be equal in expectation at and after the lag-time $h$.
 
-    Since this relationship often holds empirically, we find it to be an the most practical metric for measuring the value of an order for Uniswap LPs.
+    We now demonstrate that for a given uninformed order $\textbf a$, Uniswap LPs' expected markout is lower bounded by the fee paid to them by the uninformed order.
+
+    % Since this relationship often holds empirically, we find it to be the most practical metric for measuring the value of an order for Uniswap LPs.
 
     % When the LP is selling token0 ($d=-1$), we have
     % $$\bar p(\textbf{a}) = \frac{y_{intoAmm} \cdot (1-\gamma\phi)}{x_{outOfAmm}} = \frac{(y_{reserveChange}/(1-\gamma)) \cdot (1-\gamma \phi)}{x_{reserveChange}} = \frac{1-\gamma\phi}{1-\gamma} \cdot p_{avgPostFee},$$
@@ -43,61 +45,19 @@ Before determining the value that uninformed orderflow creates for the protocol,
 
     % Notice that these markout derivations work for both Uniswap V2 and Uniswap V3, since each AMM utilizes a $\gamma$ fee on input and $\phi$ protocol fee.
 
+    \newpage
     \begin{theorem}[Expected markout on a single uninformed order]
-        Given an order $\textbf a$, its expected markout for LPs, $\mathbb E[m_{\textbf a}]$, is lower bounded by the fees that LPs earn on the order. That is,
+        Given an $h$-uninformed order $\textbf a$ and a continuous-time stochastic process $P_{t}$
+        % that obeys $E[P_{t+h'}] = E[P_{t+h}]$ for $h'>h$
+        that obeys $E[P_{t+h}] = P_t$
+        , its expected markout for LPs, $\mathbb E[m_{\textbf a}]$, is lower bounded by the fees that LPs earn on the order. That is,
             $$\mathbb E[m_{\textbf a}] > || \textbf a || \cdot p_{avgPostFee} \cdot (\gamma(1-\phi)).$$
+        
+        % Given an order $\textbf a$, its expected markout for LPs, $\mathbb E[m_{\textbf a}]$, is lower bounded by the fees that LPs earn on the order. That is,
+        %     $$\mathbb E[m_{\textbf a}] > || \textbf a || \cdot p_{avgPostFee} \cdot (\gamma(1-\phi)).$$
     \end{theorem}
 
-    \begin{proof}
-        We begin by obtaining an expression for $\overline p(\textbf{a})$, where $x$ represents an amount of token0 and $y$ represents an amount of token1.
-
-            $$\bar p(\textbf{a}) = \frac{y_{intoAmm} \cdot (1-\gamma\phi)}{x_{outOfAmm}} = \frac{(y_{reserveChange}/(1-\gamma)) \cdot (1-\gamma \phi)}{x_{reserveChange}} = \frac{1-\gamma\phi}{1-\gamma} \cdot p_{avgPostFee}.$$
-        
-        This allows us to represent markout in the following way
-        \begin{align*}
-            m_{\textbf a} 
-                & = (-1) \cdot ||\textbf{a}|| \cdot (S_{t+h} - \frac{1-\gamma\phi}{1-\gamma} \cdot p_{avgPostFee}) \\
-                & = ||\textbf{a}|| \cdot (- S_{t+h} + \frac{1-\gamma\phi}{1-\gamma} \cdot p_{avgPostFee}) \\
-                & \approx ||\textbf{a}|| \cdot (- S_{t+h} + (1 + (1-\phi)\gamma) \cdot p_{avgPostFee}) \\
-                & = ||\textbf{a}|| \cdot p_{avgPostFee} \cdot \left( \gamma - \gamma \phi + \frac{p_{avgPostFee} - S_{t+h}}{p_{avgPostFee}} \right),
-        \end{align*}
-        using the Taylor approximation of $\frac{1-\gamma \phi}{1-\gamma}$ around $\gamma=0$ for the approximate-equal step.
-
-        With this definition for markout, we may now move on to determining the value that an uninformed order $\textbf{a}$ would create for the LPs of a pool. When $d=-1$, we would have
-        \begin{align*}
-            \mathbb E[m_\textbf a] 
-                & = \mathbb E \left[
-                    ||\textbf{a}|| \cdot p_{avgPostFee} \cdot \left( \gamma - \gamma \phi + \frac{p_{avgPostFee} - S_{h}}{p_{avgPostFee}} \right) \ | \ \textbf a \ 
-                \right] \\
-                & = ||\textbf{a}|| \cdot p_{avgPostFee} \cdot \left( \gamma - \gamma \phi + \frac{p_{avgPostFee} - \mathbb E \left[S_{h} \ | \ \textbf a \right]}{p_{avgPostFee}} \right).
-        \end{align*}
-
-        Now we assume that $\mathbb E[S_{h} \ | \ \textbf a] = \mathbb E[P_{h} \ | \ \textbf a]$; this assumption should intuitively follow from the existence of arbitrage for sufficiently large $h$. This gives us the following
-            \begin{align*}
-                \mathbb E[m_\textbf a]
-                    & = ||\textbf{a}|| \cdot p_{avgPostFee} \cdot \left( \gamma - \gamma \phi + \frac{p_{avgPostFee} - \mathbb E \left[S_{h} \ | \ \textbf a \right]}{p_{avgPostFee}} \right) \\
-                    & = ||\textbf{a}|| \cdot p_{avgPostFee} \cdot \left( \gamma - \gamma \phi + \frac{p_{avgPostFee} - \mathbb E \left[P_{h} \ | \ \textbf a \right]}{p_{avgPostFee}} \right).
-            \end{align*}
-    
-        Now, if we assume that an order is $h$-uninformed, it follows that $\mathbb E[P_{t} \ | \ \textbf a] = E[P_{t+h}]$, and we find that
-            \begin{align*}
-                \mathbb E[m_\textbf a]
-                    & = ||\textbf{a}|| \cdot p_{avgPostFee} \cdot \left( \gamma - \gamma \phi + \frac{p_{avgPostFee} - \mathbb E \left[P_{h} \ | \ \textbf a \right]}{p_{avgPostFee}} \right) \\
-                    & = ||\textbf{a}|| \cdot p_{avgPostFee} \cdot \left( \gamma - \gamma \phi + \frac{p_{avgPostFee} - \mathbb E \left[ P_{h} \right]}{p_{avgPostFee}} \right).
-            \end{align*}
-
-        If we assume that $\mathbb E[P_{t+h}] = P_t$, then we find 
-            \begin{align*}
-                \mathbb E[m_\textbf a]
-                    & = ||\textbf{a}|| \cdot p_{avgPostFee} \cdot \left( \gamma - \gamma \phi + \frac{p_{avgPostFee} - \mathbb E \left[ P_{h} \right]}{p_{avgPostFee}} \right) \\
-                    & = ||\textbf{a}|| \cdot p_{avgPostFee} \cdot \left( \gamma - \gamma \phi + \frac{p_{avgPostFee} - p_0}{p_{avgPostFee}} \right) \\
-                    & > ||\textbf{a}|| \cdot p_{avgPostFee} \cdot (\gamma(1-\phi)).
-            \end{align*}
-
-        This demonstrates the desired result for $d=-1$, the case where the pool is selling token0. A similar result can be shown for the case of $d=1$.
-    \end{proof}
-
-    Despite the legwork required for the proof, this result should be rather intuitive: in expectation, Uniswap LPs make at least the LP fee on each unit of uninformed volume in the pool. Technically, LPs make slightly more that this value in expectation, due to the fact that uninformed orders move the pool price. Although this approach has given us a lower bound on the $h$-markout of an uninformed order, it ignores the $h$-markout of other orders that are caused by uninformed orders. In particular, the uninformed order $h$-markout ignores sandwich volume. We now create another lower bound on markout value that takes sandwich attacks into account.
+    See appendix \ref{appendix:markout-lb-proof} for the proof. This result should be rather intuitive: in expectation, Uniswap LPs make at least the LP fee on each unit of uninformed volume in the pool. Technically, LPs make slightly more than this value in expectation, due to the fact that uninformed orders move the pool price. Although this approach has given us a lower bound on the $h$-markout of an uninformed order, it ignores the $h$-markout of other orders that are caused by uninformed orders. In particular, the uninformed order $h$-markout ignores sandwich orders. We now create another lower bound on markout value that takes sandwich attacks into account.
         
     %     \begin{align*}
     %         \mathbb E[m_\textbf a] 
@@ -143,20 +103,20 @@ Before determining the value that uninformed orderflow creates for the protocol,
 
 
 \subsection{Lower Bound II: Uninformed Orderflow's Sandwich Value to LPs} \label{subsection:sandwich-value-to-lps}
-    We have demonstrated, for a given order, a lower bound on the LPs' expected markout. Interestingly, some uninformed orders can \textit{cause} other orders, and in this case, we should ascribe the value of the \textit{caused} order to the uninformed order that caused it. This is far more than a theoretical distinction, since it occurs in real life in the form of sandwich attacks.
+    We have demonstrated, for a given order, a lower bound on the LPs' expected markout. Interestingly, some uninformed orders can \textit{cause} other orders, and in this case, we should ascribe the value of the \textit{caused} order to the uninformed order that caused it. This is not just a theoretical distinction, since it occurs in real life in the form of sandwich attacks.
 
-    A sandwich attack is a type of economic attack that occur on blockchains that propagate trades via public mempools, such as is the case for orders placed on Ethereum Mainnet through the \texttt{app.uniswap.org} trading interface. If a trader \textit{Alice} specifies a worst-case execution price that is far worse than the price she would get from trading on the last block's state, then it is possible for another trader, Bob, to place an order before the Alice's order and after Alice's order  to ``sandwich'' the her order. Henceforth, we refer to Bob's first and second transaction as the front- and back-run transactions, respectively; we will refer to Alice's transaction as the victim transaction. There is extensive literature on sandwich attacks and their mitigations (\cite{kulkarni2022towards}, \cite{zust2021analyzing}, \cite{zhou2021high}).
+    A sandwich attack is a type of economic attack that occurs on blockchains that propagate trades via public mempools, such as is the case for orders placed on Ethereum Mainnet through the \texttt{app.uniswap.org} trading interface. If a trader \textit{Alice} specifies a worst-case execution price that is far worse than the price she would get from trading on the last block's state, then it is possible for another trader, Bob, to place an order before Alice's order and after Alice's order  to ``sandwich'' her order, such that Bob makes a profit. Henceforth, we refer to Bob's first and second transaction as the front- and back-run transactions, respectively; we will refer to Alice's transaction as the victim transaction. There is extensive existing literature on sandwich attacks and their mitigations (\cite{kulkarni2022towards}, \cite{zust2021analyzing}, \cite{zhou2021high}).
     
     The reason sandwiches play a relevant role in this analysis is 
-    due to the fact that sandwiching is almost always an attack on uninformed flow, since uninformed flow frequently sets looser slippage tolerances and creates arbitrage opportunities. 
+    due to the fact that sandwiching is almost always an attack on uninformed flow, since uninformed flow frequently sets looser slippage tolerances and creates sandwich opportunities. 
     Since the front- and back-run orders surrounding the uninformed victim order also must pay fees, it is clear that those orders also lead to similar fees paid to miners. We observe empirically that these front- and back-run orders are themselves balanced, selling the same amount as that which is purchased -- and thus do not demonstrate the directionality that would be needed in order for them to be predictive of future price movements. That is to say, front- and back-run orders appear to be uninformed, and thus they yield the same markout for LPs as regular uninformed orderflow.
 
-    To find the amount of sandwich value that an uninformed order creates for LPs, we can utilize either of two orthogonal approaches: (a) demonstrate optimal sandwich sizes with respect to uninformed order size and slippage tolerance, and (b) use empirical data to find the amount of sandwich value that historical uninformed orders have created for LPs. We demonstrate both approaches here.
+    To find the amount of sandwich value that an uninformed order creates for LPs, we can utilize either of two distinct approaches: (a) demonstrate optimal sandwich sizes analytically with respect to uninformed order size and slippage tolerance, and (b) use empirical data to find the amount of sandwich value that historical uninformed orders have created for LPs. We demonstrate both approaches here.
 
     \subsubsection{Quantifying Sandwich Value Analytically}
         For Uniswap V2, \cite{heimbach2022eliminating} derived the optimal sandwich size with respect to an uninformed order. The resulting analytical solution provides formulas for computing the optimal sandwich input amounts for the front- and back-running trades.
 
-        For orders on Uniswap V2 that have no slippage tolerance specified and which is purchasing token1 (WOLOG), the optimal sandwich order input size is the following:
+        For orders on Uniswap V2 that have no slippage tolerance specified and which are purchasing token1 (without loss of generality), the optimal sandwich order input size is the following:
 
         \begin{equation*}
             \delta^o_{a_x} = 
@@ -189,42 +149,52 @@ Before determining the value that uninformed orderflow creates for the protocol,
         As an alternative to determining optimal sandwiching analytically, we can utilize historical sandwich data to measure the amount of value created for LPs as a result of an uninformed order getting sandwiched.
 
         \textbf{Data collection methodology}. 
-        To collect this data, we use the Uniswap V3 subgraph, and the analysis presented here is performed specifically on the ETH-USDC 0.05\% fee Uniswap V3 pool. We check that a transaction is sandwiched by utilizing the same methodology as Johnny Chuang and Anderson Chen in their Uniswap bounty 
+        To collect this data, we use the Uniswap V3 subgraph, and the analysis presented here is performed specifically on the ETH-USDC 0.05\% fee Uniswap V3 pool. We check that a transaction is sandwiched by utilizing a similar methodology as Johnny Chuang and Anderson Chen in their Uniswap bounty 
         \cite{chuang2022mev}. 
-        We deem that an order $o$ has been sandwiched if the following conditions hold: (0) there is an address \textit{Addy} that placed two orders in the same block as $o$, (1) the orders on either side of $o$ were placed by \textit{Addy}, (2) \textit{Addy}'s order before $o$ was in the same direction as $o$, (3) \textit{Addy}'s order after \textit{o} was in the opposite direction as \textit{o}, (4) the orders on either side of \textit{Addy}'s order are do not utilize an aggregator or router contract, and (5) the orders on either side of \textit{Addy}'s have a token0 amount within 50\% of each other. We apply this filter to all of the swaps in all of the Ethereum blocks from July 31, 2022 - Dec 31, 2022 to create a dataset of sandwiches.
+        We deem that an order $o$ has been sandwiched if the following conditions hold: (0) there is an address \textit{Addy} that placed two orders in the same block as $o$, (1) the orders on either side of $o$ were placed by \textit{Addy}, (2) \textit{Addy}'s order before $o$ was in the same direction as $o$, (3) \textit{Addy}'s order after \textit{o} was in the opposite direction as \textit{o}, (4) the orders on either side of \textit{Addy}'s order do not utilize an aggregator or router contract, and (5) the orders on either side of \textit{Addy}'s have a token0 amount within 10\% of each other. We apply this filter to all of the swaps in all of the Ethereum blocks from July 1, 2022 - Dec 31, 2022 to create a dataset of sandwiches.
 
         \textbf{Results}.
         We find that sandwiched orders create an immense amount of value for the LPs of the protocol.
-        The important figures can be found in appendix \ref{appendix:sandwich-data}, and we present some of the most important figures here.
+        The important figures can be found in appendix \ref{appendix:data}, and we present some of the most important figures for the USDC-ETH-0.05\% pool below.
         
-        (NOTE TO READER: we're still reviewing data, and these numbers should not be interpreted as final until we share this publicly; we're still tweaking the methodology for categorizing sandwiches.) We identified 3819 sandwich attacks between July 7, 2022 and January 2, 2022. Across all sandwich attacks, there was a cumulative \$11,496,000,000 in ``bun'' volume and \$2,051,000,000 in ``meat'' volume; put another way, for every dollar of meat volume, there were over \$5 of bun volume. All in all, this led to over \$5,700,000 in fees paid by sandwich bots to LPs, or 14\% of the total fees paid over that period.
+        Between July 1, 2022 and January 1, 2023, we identified 3,756 sandwich attacks, which attacked over \$11B worth of sandwich victim volume \footnote{We calculate this using the \texttt{amount0}, i.e. USDC amount, of the swap. Over this period of time, the price of USDC was stable enough for us to report these metrics without an explicit USDC-USD conversion.}. 
+        Of the non-front- and back-run transactions, 0.231\% were sandwich victim transactions; these victim transactions accounted for 2.38\% of the pool's overall swap volume.
+        There were \$42,446,355.95 in LP fees paid over this period, and \$5,767,261.15 of those fees were paid by sandwich attack front-/back-run transactions. Each dollar of sandwich victim volume led to, on average, over \$5 of front- and back-run volume.
 
         \begin{figure}
-            \label{fig:meat-bun-ratio}
             \centering
-            \includegraphics[scale=.4]{figs/bun-to-meat-ratio.png}
-            \caption{The 100-sandwich rolling ratio of bun volume to meat volume for the ETH-USDC 0.05\% pool.}
+            \includegraphics[scale=.40]{figs/bun-to-meat-ratio.png}
+            \caption{The 100-sandwich rolling ratio of front- and back-run volume to sandwich victim volume for the ETH-USDC 0.05\% pool.}
+            \label{fig:meat-bun-ratio}
         \end{figure}
 
         % TODO review this section once we verify the sandwich data
-        We also present plot \ref{fig:meat-bun-pairplots}, showing the volume of the sandwich victim and front-/back-run orders. We see that there are two regions of sandwiches, with a cutoff at approximately 100,000 USDC of meat volume. Roughly speaking, when the meat volume is less than 100,000 USDC, the bun volume is correlated to the meat volume (left plot); when the meat volume is greater than 100,000 USDC, the bun volume is not correlated to the meat volume. This arises due to there being two regions of sandwich optimization. When the meat volume is less than small (e.g. less than 100,000 USDC) the sandwich bot must balance its LP fees paid vs its revenue from the sandwich attack. When the meat volume is large (e.g. greater than 100,000 USDC) the sandwich bot will place orders large enough to hit the meat order's maximum slippage.
+        We also present plot \ref{fig:meat-bun-pairplots}, showing the volume of the sandwich victim and front-/back-run orders. We see that there are two regions of sandwiches, with a cutoff at approximately $10^{4.3}=30,000$ USDC of front-/back-run volume.
+        % Roughly speaking, when the sandwich victim volume is less than 100,000 USDC, the bun volume is correlated to the meat volume (left plot); when the meat volume is greater than 100,000 USDC, the bun volume is not correlated to the meat volume.
+        This arises due to the two types of sandwich attacks that occur on the USDC-ETH-0.05\% pool: single-hop sandwiches and multi-hop sandwiches. Single-hop sandwiches are the simplest type of sandwich attack: user trades A for B, and the sandwicher front-runs with A for B then back-runs with B for A. A multi-hop sandwich is more complicated: user trades A for B for C, and the sandwicher front-runs with A for B for C, then back-runs with C for B for A. In general, most multi-hop transactions occur when one of the user's input or output tokens is relatively illiquid; since these illiquid tokens are easier for sandwich attackers to manipulate the price of, they do not need to trade as much size, and they make up the lower-left-hand-side of the graph. On the other hand, single-hop sandwiches on the USDC-ETH-0.05\% pool require significantly more volume, due to the fact that the USDC-ETH-0.05\% pool is so liquid. This means that these sandwiches are typically in the $10^5-10^7$ USDC range.
+        For example sandwich transactions, see appendix table \ref{Tab:sandwiches}.
+
+        
+        % This arises due to there being two regions of sandwich optimization. When the meat volume is less than small (e.g. less than 100,000 USDC) the sandwich bot must balance its LP fees paid vs its revenue from the sandwich attack. When the meat volume is large (e.g. greater than 100,000 USDC) the sandwich bot will place orders large enough to hit the meat order's maximum slippage.
 
         \begin{figure}
+            \centering
+            \includegraphics[scale=.33]{figs/meat-and-bun-pairwise-plots.png}
+            \caption{Scatter plot of (sandwich victim volume, front- and back-run) volume pairs. Points in the lower-left are multi-hop sandwiches (sandwiching orders of the form `A for B for C'), and points in the upper-right are single-hop sandwiches (sandwiching orders of the form `A for B').
+            % The left plot shows all of the sandwich data, and the right plot only considers sandwiches where the meat volume is greater than 100,000 USDC.
+            }
             \label{fig:meat-bun-pairplots}
-            \centering
-            \includegraphics[scale=.43]{figs/meat-and-bun-pairwise-plot.png}
-            \caption{Scatter plots of (meat, bun) volume pairs. The left plot shows all of the sandwich data, and the right plot only considers sandwiches where the meat volume is greater than 100,000 USDC.}
         \end{figure}
 
-        \begin{figure}
-            \label{fig:meat-bun-pairplot-small}
-            \centering
-            \includegraphics[scale=.43]{figs/meat-and-bun-pairwise-small-meat.png}
-            \caption{Scatter plots and line of best fit for (meat, bun) volume pairs for meat volume less than 100,000 USDC.}
-        \end{figure}
+        % \begin{figure}
+        %     \label{fig:meat-bun-pairplot-small}
+        %     \centering
+        %     \includegraphics[scale=.43]{figs/meat-and-bun-pairwise-small-meat.png}
+        %     \caption{Scatter plots and line of best fit for (meat, bun) volume pairs for meat volume less than 100,000 USDC.}
+        % \end{figure}
         
 
-        By inspection, we can tell from these graphs that a sandwiched order of volume $10^{5.8}$ can realistically cause anywhere from 100,000 USDC to 10,000,000 USDC. Although we can approximate the amount of sandwich volume that a sandwiched order causes, the value varies widely, and we should not give a closed-form approximation of the value of sandwich fees generated from a single sandwiched order. Instead, it is more fair to say that, by inspection of the ratio plot \ref{fig:meat-bun-ratio}, on-average  victim volume causes between 4 and 7 times as much front- and back-run volume.
+        % By inspection, we can tell from these graphs that a sandwiched order of volume $10^{5.8}$ can realistically cause anywhere from 100,000 USDC to 10,000,000 USDC. Although we can approximate the amount of sandwich volume that a sandwiched order causes, the value varies widely, and we should not give a closed-form approximation of the value of sandwich fees generated from a single sandwiched order. Instead, it is more fair to say that, by inspection of the ratio plot \ref{fig:meat-bun-ratio}, on-average  victim volume causes between 4 and 7 times as much front- and back-run volume.
 
 
 

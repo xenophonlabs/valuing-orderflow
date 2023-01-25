@@ -1,0 +1,26 @@
+\section{Identifying Uninformed Orders} \label{appendix:idendify-uninformed}
+
+At various points in this analysis, it has been useful for us to classify historical swaps as informed or uninformed. However, since our definition of uninformed orderflow depends on probabilistic statements, we cannot verify with certainty whether an order was uninformed based just on historical data like markout. Here, we share a few approaches that can be utilized to determine if an order is informed.
+
+\textbf{Approach I: where the order came from}. Most Uniswap swaps are not placed directly on the Uniswap Core smart contracts, and instead they go through an order router. The Uniswap protocol has an order router, and other DEX aggregator protocols also offer order routers. These routing protocols cause orders to pay additional gas fees that they would not incur if they went directly through the Uniswap core routers. Since CEX-DEX and DEX-DEX arbitrage are (presumably) very competitive, and thus sensitive to gas fees, swaps that go through routers are likely not informed. Furthermore, it is straightforward to determine if an order went through a router by checking the Ethereum transaction's \texttt{msg.sender} field. Thus, this provides us with a quick and easy classifier for orderflow information.
+
+\textbf{Approach II: observed markout + Bayesian classifier}. For each swap, calculate the avg execution price, then look at the price after $h$, and if the swapper lost money by time $h$, count the order as uninformed. Conversely, if the swap is profitable, then we do not necessarily know that it is informed, since we would expect that approximately half of the uninformed orders are profitable (although possibly a bit less than half, depending on the pool fees). Then for an order $o$, we can use Bayes' rule to calculate 
+    \begin{align*}
+        \text{Pr}(o \text{ is uninformed} \ | \ o \text{ is profitable}) 
+        & = \frac{\text{Pr}(o \text{ is profitable} \ | \ o \text{ is is uninformed}) \cdot \text{Pr}(o \text{ is uninformed})}{\text{Pr}(o \text{ is profitable})} \\
+        & \approx \frac{.5 \cdot p}{(1-p)\cdot 1 + (p) \cdot .5} \\
+        & = \frac{.5p}{1-.5p},
+    \end{align*}
+where $p$ is the proportion of swaps that are uninformed, which it unknown. However, we do know the proportion of observed swaps that lose money, and let us call this quantity $s$. Let $s$ be the proportion of unprofitable swaps, then since we expect uninformed orders to lose money about half of the time, we have that $p=2s$, and thus we have
+    \begin{align*}
+        \text{Pr}(o \text{ is uninformed} \ | \ o \text{ is profitable})
+        & = \frac{s}{1-s}.
+    \end{align*}
+
+Then, to compute the sandwich multiplier using this number, we would look at all of the profitable swaps and assign them `informed' with probability $\frac{s}{1-s}$. This would allow us to calculate a single value of $m_{sandwich}$, and then we could re-run this again, and again, etc until we converge on a value of $m_{sandwich}$.
+
+The reason we do not use this approach is that it relies too heavily on the definition of profitable trades, which itself relies on the markout interval $h$. We leave it as an interesting area of future work to see if $m_{sandwich}$ derived from this approach is the same as the $m_{sandiwich}$ that we derive using approach I.
+
+% This is basically saying ``swapper loses implies swapper is retail", but we're not saying ``swapper wins => swapper not retail", since retail wins 50% of the time (modulo fees). Perhaps you could then use this swap size distribution of swaps that lost to make some claim about the swaps that won.
+
+% \textbf{

@@ -1,0 +1,52 @@
+\section{Proof of Markout Lower Bound} \label{appendix:markout-lb-proof}
+
+\begin{proof}
+        We begin by obtaining an expression for $\overline p(\textbf{a})$, where $x$ represents an amount of token0 and $y$ represents an amount of token1.
+
+            $$\bar p(\textbf{a}) = \frac{y_{intoAmm} \cdot (1-\gamma\phi)}{x_{outOfAmm}} = \frac{(y_{reserveChange}/(1-\gamma)) \cdot (1-\gamma \phi)}{x_{reserveChange}} = \frac{1-\gamma\phi}{1-\gamma} \cdot p_{avgPostFee}.$$
+        
+        This allows us to represent markout in the following way
+        \begin{align*}
+            m_{\textbf a} 
+                & = (-1) \cdot ||\textbf{a}|| \cdot (P_{t+h} - \frac{1-\gamma\phi}{1-\gamma} \cdot p_{avgPostFee}) \\
+                & = ||\textbf{a}|| \cdot (- P_{t+h} + \frac{1-\gamma\phi}{1-\gamma} \cdot p_{avgPostFee}) \\
+                & \approx ||\textbf{a}|| \cdot (- P_{t+h} + (1 + (1-\phi)\gamma) \cdot p_{avgPostFee}) \\
+                & = ||\textbf{a}|| \cdot p_{avgPostFee} \cdot \left( \gamma - \gamma \phi + \frac{p_{avgPostFee} - P_{t+h}}{p_{avgPostFee}} \right),
+        \end{align*}
+        using the Taylor approximation of $\frac{1-\gamma \phi}{1-\gamma}$ around $\gamma=0$ for the approximate-equal step.
+
+        With this definition for markout, we may now move on to determining the value that an uninformed order $\textbf{a}$ would create for the LPs of a pool. When $d=-1$, we would have
+        \begin{align*}
+            \mathbb E[m_\textbf a] 
+                & = \mathbb E \left[
+                    ||\textbf{a}|| \cdot p_{avgPostFee} \cdot \left( \gamma - \gamma \phi + \frac{p_{avgPostFee} - P_{t+h}}{p_{avgPostFee}} \right) \ | \ \textbf a \ 
+                \right] \\
+                & = ||\textbf{a}|| \cdot p_{avgPostFee} \cdot \left( \gamma - \gamma \phi + \frac{p_{avgPostFee} - \mathbb E \left[P_{t+h} \ | \ \textbf a \right]}{p_{avgPostFee}} \right).
+        \end{align*}
+
+        % Now we assume that $\mathbb E[S_{t+h} \ | \ \textbf a] = \mathbb E[P_{t+h} \ | \ \textbf a]$; this assumption should intuitively follow from the existence of arbitrage for sufficiently large $h$. This gives us the following
+        %     \begin{align*}
+        %         \mathbb E[m_\textbf a]
+        %             & = ||\textbf{a}|| \cdot p_{avgPostFee} \cdot \left( \gamma - \gamma \phi + \frac{p_{avgPostFee} - \mathbb E \left[P_{t+h} \ | \ \textbf a \right]}{p_{avgPostFee}} \right) \\
+        %             & = ||\textbf{a}|| \cdot p_{avgPostFee} \cdot \left( \gamma - \gamma \phi + \frac{p_{avgPostFee} - \mathbb E \left[P_{t+h} \ | \ \textbf a \right]}{p_{avgPostFee}} \right).
+        %     \end{align*}
+    
+        Since $\textbf a$ is $h$-uninformed, it follows that $\mathbb E[P_{t+h} \ | \ \textbf a] = E[P_{t+h}]$, and we find that
+            \begin{align*}
+                \mathbb E[m_\textbf a]
+                    & = ||\textbf{a}|| \cdot p_{avgPostFee} \cdot \left( \gamma - \gamma \phi + \frac{p_{avgPostFee} - \mathbb E \left[P_{t+h} \ | \ \textbf a \right]}{p_{avgPostFee}} \right) \\
+                    & = ||\textbf{a}|| \cdot p_{avgPostFee} \cdot \left( \gamma - \gamma \phi + \frac{p_{avgPostFee} - \mathbb E \left[ P_{t+h} \right]}{p_{avgPostFee}} \right).
+            \end{align*}
+
+        If we assume that $\mathbb E[P_{t+h}] = P_t$, then we find 
+            \begin{align*}
+                \mathbb E[m_\textbf a]
+                    & = ||\textbf{a}|| \cdot p_{avgPostFee} \cdot \left( \gamma - \gamma \phi + \frac{p_{avgPostFee} - \mathbb E \left[ P_{t+h} \right]}{p_{avgPostFee}} \right) \\
+                    & = ||\textbf{a}|| \cdot p_{avgPostFee} \cdot \left( \gamma - \gamma \phi + \frac{p_{avgPostFee} - P_t}{p_{avgPostFee}} \right) \\
+                    & > ||\textbf{a}|| \cdot p_{avgPostFee} \cdot (\gamma(1-\phi)).
+            \end{align*}
+
+        This demonstrates the desired result for $d=-1$, the case where the pool is selling token0. A similar result can be shown for the case of $d=1$.
+    \end{proof}
+
+    
